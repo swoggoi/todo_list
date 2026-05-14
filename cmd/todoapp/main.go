@@ -10,7 +10,7 @@ import (
 
 	"github.com/joho/godotenv"
 	core_logger "github.com/swoggoi/todo_list/internal/core/logger"
-	core_postgres_pool "github.com/swoggoi/todo_list/internal/core/repository/postgres/pool"
+	core_pgx_pool "github.com/swoggoi/todo_list/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/swoggoi/todo_list/internal/core/transport/http/middleware"
 	core_http_server "github.com/swoggoi/todo_list/internal/core/transport/http/server"
 	users_postgres_repository "github.com/swoggoi/todo_list/internal/features/users/repository/postgres"
@@ -42,8 +42,8 @@ func main() {
 	defer logger.Close()
 
 	logger.Debug("initializing postgres connection pool ")
-	pool, err := core_postgres_pool.NewConnectionPool(
-		core_postgres_pool.NewConfigMust(),
+	pool, err := core_pgx_pool.NewPool(
+		core_pgx_pool.NewConfigMust(),
 		ctx,
 	)
 	if err != nil {
@@ -64,13 +64,18 @@ func main() {
 		logger,
 		core_http_middleware.RequestID(),
 		core_http_middleware.Logger(logger),
-		core_http_middleware.Panic(),
 		core_http_middleware.Trace(),
+		core_http_middleware.Panic(),
 	)
 
-	apiVersionRoutes := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
-	apiVersionRoutes.RegisterRoutes(usersTransportHTTP.Routes()...)
-	httpServer.RegisterAPIRouters(apiVersionRoutes)
+	apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
+	apiVersionRouterV1.RegisterRoutes(usersTransportHTTP.Routes()...)
+
+	apiVersionRouterV2 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2,
+		core_http_middleware.Dummy("api v2 middleware"))
+	apiVersionRouterV2.RegisterRoutes(usersTransportHTTP.Routes()...)
+
+	httpServer.RegisterAPIRouters(apiVersionRouterV1, apiVersionRouterV2)
 
 	if err := httpServer.Run(ctx); err != nil {
 		logger.Error("HTTP server run error", zap.Error(err))
