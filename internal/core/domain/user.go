@@ -42,6 +42,16 @@ func NewUserUnitialized(
 	)
 }
 
+func NewUserPatch(
+	fullName Nullable[string],
+	phoneNumber Nullable[string],
+) UserPatch {
+	return UserPatch{
+		FullName:    fullName,
+		PhoneNumber: phoneNumber,
+	}
+}
+
 func (u *User) Validate() error {
 	fullNameLenght := len([]rune(u.FullName))
 	if fullNameLenght < 3 || fullNameLenght > 100 {
