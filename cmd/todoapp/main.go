@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	core_config "github.com/swoggoi/todo_list/internal/core/config"
 	core_logger "github.com/swoggoi/todo_list/internal/core/logger"
 	core_pgx_pool "github.com/swoggoi/todo_list/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/swoggoi/todo_list/internal/core/transport/http/middleware"
@@ -23,12 +24,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	timeZone = time.UTC
-)
-
 func main() {
-	time.Local = timeZone
+	tCfg := core_config.NewConfigMust()
+
+	time.Local = tCfg.TimeZone
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}
@@ -50,7 +49,7 @@ func main() {
 	}
 	defer logger.Close()
 
-	logger.Debug("application time zone ", zap.Any("zone", timeZone))
+	logger.Debug("application time zone ", zap.Any("zone", time.Local))
 
 	logger.Debug("initializing postgres connection pool ")
 	pool, err := core_pgx_pool.NewPool(
