@@ -21,6 +21,7 @@ func GetIntQueryParam(r *http.Request, key string) (*int, error) {
 			"param=%s by key=%s not a valid integer: %v :%w",
 			param,
 			key,
+			err,
 			core_errors.ErrInvalidArgument,
 		)
 	}

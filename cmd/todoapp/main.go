@@ -31,9 +31,7 @@ func main() {
 	tCfg := core_config.NewConfigMust()
 
 	time.Local = tCfg.TimeZone
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
 
 	ctx, cancel := signal.NotifyContext(
 		context.Background(),
@@ -80,7 +78,6 @@ func main() {
 	statisticsRepository := statistics_postgres_repository.NewStatisticsRepository(pool)
 	statisticsService := statistics_service.NewStatisticsService(statisticsRepository)
 	statisticsTransportHTTP := statistic_transport_http.NewStatisticsHTTPHandler(statisticsService)
-
 
 	logger.Debug("initializing HTTP server")
 	httpServer := core_http_server.NewHTTPServer(
