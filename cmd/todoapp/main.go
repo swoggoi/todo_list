@@ -15,6 +15,9 @@ import (
 	core_pgx_pool "github.com/swoggoi/todo_list/internal/core/repository/postgres/pool/pgx"
 	core_http_middleware "github.com/swoggoi/todo_list/internal/core/transport/http/middleware"
 	core_http_server "github.com/swoggoi/todo_list/internal/core/transport/http/server"
+	statistics_postgres_repository "github.com/swoggoi/todo_list/internal/features/statistics/repository/postgres"
+	statistics_service "github.com/swoggoi/todo_list/internal/features/statistics/service"
+	statistic_transport_http "github.com/swoggoi/todo_list/internal/features/statistics/transport/http"
 	tasks_postgres_repository "github.com/swoggoi/todo_list/internal/features/tasks/repository/postgres"
 	tasks_service "github.com/swoggoi/todo_list/internal/features/tasks/service"
 	tasks_transport "github.com/swoggoi/todo_list/internal/features/tasks/transport/http"
@@ -73,6 +76,12 @@ func main() {
 	tasksService := tasks_service.NewTasksService(tasksRepository)
 	tasksTransportHTTP := tasks_transport.NewTasksService(tasksService)
 
+	logger.Debug("Initializing feature", zap.String("feature", "statistics"))
+	statisticsRepository := statistics_postgres_repository.NewStatisticsRepository(pool)
+	statisticsService := statistics_service.NewStatisticsService(statisticsRepository)
+	statisticsTransportHTTP := statistic_transport_http.NewStatisticsHTTPHandler(statisticsService)
+
+
 	logger.Debug("initializing HTTP server")
 	httpServer := core_http_server.NewHTTPServer(
 		core_http_server.NewConfigMust(),
@@ -86,6 +95,7 @@ func main() {
 	apiVersionRouterV1 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion1)
 	apiVersionRouterV1.RegisterRoutes(usersTransportHTTP.Routes()...)
 	apiVersionRouterV1.RegisterRoutes(tasksTransportHTTP.Routes()...)
+	apiVersionRouterV1.RegisterRoutes(statisticsTransportHTTP.Routes()...)
 
 	apiVersionRouterV2 := core_http_server.NewAPIVersionRouter(core_http_server.ApiVersion2,
 		core_http_middleware.Dummy("api v2 middleware"))
