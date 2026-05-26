@@ -1,4 +1,4 @@
-package core_http_responce
+package core_http_response
 
 import "net/http"
 

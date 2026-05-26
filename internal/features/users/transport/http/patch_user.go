@@ -44,6 +44,25 @@ func (r *PatchUserRequest) Validate() error {
 
 type PatchUserResponse UserDTOResponse
 
+// PatchUser godoc
+// @Summary Изменение пользователя
+// @Description Изменение информации об уже существующем в системе пользователе
+// @Description ### Логика обновления полей (Three-state logic):
+// @Description 1. **Поле не передано**: `phone_number` игнорируется, значение в БД не меняется
+// @Description 2. **Явно передано значение**: `phone_number: "+79998887766"` - устанавливает новый номер
+// @Description 3. **Передан null**: `"phone_number": null` - очищает поле в БД (set to NULL)
+// @Description Ограничения: `full_name` не может быть выставлен как null
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "ID изменяемого пользователя"
+// @Param request body PatchUserRequest true "PatchUser тело запроса"
+// @Success 200 {object} PatchUserResponse "Пользователь успешно найден"
+// @Failure 400 {object} core_http_responce.ErrorResponse "Bad request"
+// @Failure 404 {object} core_http_responce.ErrorResponse "User not found"
+// @Failure 409 {object} core_http_responce.ErrorResponse "Conflict"
+// @Failure 500 {object} core_http_responce.ErrorResponse "Internal server error"
+// @Router /user/{id} [patch]
 func (h *UsersHTTPHandler) PatchUser(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := core_logger.FromContext(ctx)
